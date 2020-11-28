@@ -90,7 +90,8 @@ main = do
             drawBuffer colorMap 0 0 buffer
             -- Now draw some text in the centre.
             -- We set the color to curses ID corresponding to fg 15 (white) and bg 1 (black)
-            setColor $ colorId colorMap (Color 15) (Color 1)
+            let (Just c) = colorId colorMap (Color 15) (Color 1)
+            setColor c
             moveCursor 25 50
             drawText "| Text demonstrating that each cell is half the row height |"
       w <- defaultWindow
