@@ -12,4 +12,9 @@ The main caveat is that one is now restricted to 15 unique colors: `UI.NCurses` 
 
 ## Usage Example
 
-The above Mandelbrot example can be seen in `app/Main.hs`.
+The above Mandelbrot example can be seen in `app/Main.hs`. To use:
+
+- Register `Color 1` through `Color 15` by providing a list of 15 hex strings to `initHexColors`. This sets the terminal colors appropriately, registers a unique curses `ColorID` for every possible foreground/background combination of each of the 15 colors, and returns a map from (fg, bg) tuples to corresponding `ColorID`.
+- Create a `Buffer` (a 2D `Vector` of `Color`) by providing dimensions and a default color to `mkBuffer`.
+- Draw on this buffer using `SetXY`.
+- When ready to blit to the screen, `drawBuffer` will create the appropriate curses `Update ()` operations for writing the corresponding Upper Half Block characters to the terminal to render the buffer rows at half-height.
