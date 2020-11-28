@@ -17,7 +17,7 @@ greyScale :: [String]
 greyScale =
   [ "000000",
     "111111",
-    -- ... 13 intermediate hex strings omitted ...
+    -- ... 12 intermediate hex strings omitted ...
     "ffffff"
   ]
 
