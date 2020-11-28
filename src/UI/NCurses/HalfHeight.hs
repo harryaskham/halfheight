@@ -1,4 +1,13 @@
-module HalfHeight (ColorMap (), getCol, initHexColors, Buffer (), mkBuffer, setXY, drawBuffer) where
+module UI.NCurses.HalfHeight
+  ( ColorMap (),
+    colorId,
+    initHexColors,
+    Buffer (),
+    mkBuffer,
+    setXY,
+    drawBuffer,
+  )
+where
 
 import Control.Applicative (ZipList (ZipList, getZipList))
 import Data.Int (Int16)
@@ -39,8 +48,8 @@ instance Ord ColorPair where
 type ColorMap = M.Map ColorPair ColorID
 
 -- Pull a color pair out of the environment.
-getCol :: ColorMap -> Color -> Color -> ColorID
-getCol colors fg bg = fromMaybe (error (show fg ++ show bg)) $ M.lookup (ColorPair fg bg) colors
+colorId :: ColorMap -> Color -> Color -> ColorID
+colorId colors fg bg = fromMaybe (error (show fg ++ show bg)) $ M.lookup (ColorPair fg bg) colors
 
 -- Takes a hex code and converts to a tuple of RGB 1000 values.
 -- These are required by the curses color register.
@@ -116,8 +125,8 @@ drawBuffer colorMap tlX tlY gfxBuffer =
         pairedBuffer = V.fromList $ combineRows <$> VS.chunksOf 2 gfxBuffer
         mkSetter x y = do
           let (ColorPair fg bg) = pairedBuffer V.! y V.! x
-              colorID = getCol colorMap fg bg
+              cId = colorId colorMap fg bg
           moveCursor (fromIntegral $ y + tlY) (fromIntegral $ x + tlX)
-          setColor colorID
+          setColor cId
           drawGlyph $ Glyph '▀' []
     sequence_ [mkSetter x y | x <- [0 .. width - 1], y <- [0 .. height -1]]

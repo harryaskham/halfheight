@@ -3,10 +3,29 @@
 module Main where
 
 import Control.Monad (forever)
-import Data.Complex
+import Data.Complex (Complex (..), magnitude)
 import Data.List (foldl')
-import HalfHeight
 import UI.NCurses
+  ( Color (..),
+    CursorMode (..),
+    defaultWindow,
+    drawText,
+    moveCursor,
+    render,
+    runCurses,
+    setColor,
+    setCursorMode,
+    setEcho,
+    updateWindow,
+  )
+import UI.NCurses.HalfHeight
+  ( Buffer,
+    colorId,
+    drawBuffer,
+    initHexColors,
+    mkBuffer,
+    setXY,
+  )
 
 -- Set up a 15-color greyscale pallette
 greyScale :: [String]
@@ -71,7 +90,7 @@ main = do
             drawBuffer colorMap 0 0 buffer
             -- Now draw some text in the centre.
             -- We set the color to curses ID corresponding to fg 15 (white) and bg 1 (black)
-            setColor $ getCol colorMap (Color 15) (Color 1)
+            setColor $ colorId colorMap (Color 15) (Color 1)
             moveCursor 25 50
             drawText "| Text demonstrating that each cell is half the row height |"
       w <- defaultWindow

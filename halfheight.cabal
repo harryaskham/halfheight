@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a74a77745ac35af1250c04a369fdd009d97610cc06bec64bfff2110f6d9decce
+-- hash: baa0707c6a410c8b48d3950c05e67e6199c5fd2768b19199c7924ed1e9756c90
 
 name:           halfheight
 version:        0.1.0.0
@@ -27,7 +27,7 @@ source-repository head
 
 library
   exposed-modules:
-      HalfHeight
+      UI.NCurses.HalfHeight
   other-modules:
       Paths_halfheight
   hs-source-dirs:
