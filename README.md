@@ -1,2 +1,3 @@
-# halfheight
-A curses-based Haskell library for drawing half-height console graphics
+# HalfHeight
+
+An extension to `UI.NCurses` for drawing half-height console graphics.
