@@ -14,9 +14,6 @@ import Data.Int (Int16)
 import Data.List.Split as LS (chunksOf)
 import qualified Data.Map.Strict as M
 import Data.Maybe (catMaybes)
-import Data.Vector (Vector)
-import qualified Data.Vector as V
-import Data.Vector.Split as VS (chunksOf)
 import Numeric (readHex)
 import UI.NCurses
   ( Color (Color),
@@ -91,19 +88,22 @@ initHexColors hexes = do
 -- Representation of a 2D grid of half-height coloured cells.
 type Buffer = M.Map (Int, Int) ColorPair
 
--- Make an empty buffer.
+-- | Make an empty buffer with the given color set as the background.
 mkBuffer :: Int -> Int -> Color -> Buffer
-mkBuffer width height bgCol = M.fromList [((x, y), (ColorPair bgCol bgCol)) | y <- [0 .. (height `div` 2) -1], x <- [0 .. width -1]]
+mkBuffer width height bgCol =
+  M.fromList
+    [((x, y), (ColorPair bgCol bgCol)) | y <- [0 .. (height `div` 2) -1], x <- [0 .. width -1]]
 
 -- | Set a single block in the graphics buffer to the given color.
 setXY :: Int -> Int -> Color -> Buffer -> Buffer
-setXY x y c b = M.insert (x, y `div` 2) newPair b
-  where
-    -- TODO: fix partiality
-    (Just (ColorPair c1 c2)) = M.lookup (x, y `div` 2) b
-    newPair = case y `mod` 2 of
-      0 -> ColorPair c c2
-      1 -> ColorPair c1 c
+setXY x y c b =
+  M.adjust
+    ( \(ColorPair c1 c2) -> case y `rem` 2 of
+        0 -> ColorPair c c2
+        1 -> ColorPair c1 c
+    )
+    (x, y `div` 2)
+    b
 
 -- | Draws the graphics buffer to the screen at the given top-left position.
 -- Must first have obtained a color map by registering colors with initHexColors.

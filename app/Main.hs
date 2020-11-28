@@ -130,30 +130,37 @@ nord =
 
 performanceMain :: IO ()
 performanceMain = do
-  colorMap <- runCurses $ initHexColors nord
+  colorMap <- runCurses $ initHexColors greyScale
   let buffer = mkBuffer 100 100 (Color 1)
   runCurses $ do
     _ <- (flip runStateT) (buffer, 0) $ do
       lift $ setEcho False
       lift $ setCursorMode CursorInvisible
       forever $ do
-        (b, frames) <- get
-        g <- liftIO newStdGen
-        --let (x, g') = randomR (0, 99) g
-        --let (y, g'') = randomR (0, 99) g'
-        let (c, _) = randomR (1, 15) g
-            -- newB = setXY x y (Color c) b
-            newB = foldl' (\b (x, y) -> setXY x y (Color c) b) b [(x, y) | x <- [0 .. 99], y <- [0 .. 99]]
+        (b, t) <- get
+        let col x y =
+              let x' = fromIntegral (x - 50)
+                  y' = fromIntegral (y - 50)
+                  t' = fromIntegral t
+               in abs $ round $ (14 * ((sin $ 0.1 * x') * (cos $ 0.1 * y')) / (sin $ 0.1 * t')) + 1
+            {-
+            let col x y =
+                  let x' = fromIntegral (x - 50)
+                      y' = fromIntegral (y - 50)
+                      t' = fromIntegral t
+                   in 1 + (x' * y' * t') `mod` 14
+            -}
+            newB = foldl' (\b (x, y) -> setXY x y (Color $ col x y) b) b [(x, y) | x <- [0 .. 99], y <- [0 .. 99]]
             drawOp = do
               drawBuffer colorMap 0 0 newB
               let (Just c) = colorId colorMap (Color 15) (Color 1)
               setColor c
               moveCursor 0 0
-              drawText $ T.pack $ show frames
+              drawText $ T.pack $ show t
         w <- lift defaultWindow
         lift $ updateWindow w drawOp
         lift render
-        put (newB, frames + 1)
+        put (newB, t + 1)
     return ()
 
 main :: IO ()
