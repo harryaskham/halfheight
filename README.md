@@ -8,7 +8,7 @@ By drawing a Unicode [Upper Half Block](https://www.compart.com/en/unicode/U+258
 
 There's a [brief writeup](https://askham.ai/2020/11/26/half-height-console-graphics.html) on my blog.
 
-The main caveat is that one is now restricted to 15 unique colors: `UI.NCurses` usually lets you define 255 custom foreground/background combinations, but now we might have any two colors appear as our foreground/background.
+The main caveat is that one is now restricted to 15 unique colors: `UI.NCurses` usually lets you define 255 custom foreground/background combinations, but now we might have any two colors appear as our foreground/background. 16 colors would tip us over, requiring 256 possible pairs, so we are limited to 15 colors and 225 pairings.
 
 ## Usage Example
 
