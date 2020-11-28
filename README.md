@@ -72,7 +72,7 @@ main = do
       render
 ```
 
-The full Mandelbrot example can be seen in `app/Main.hs`. To use:
+In this example we:
 
 - Register `Color 1` through `Color 15` by providing a list of 15 hex strings to `initHexColors`. This sets the terminal colors appropriately, registers a unique curses `ColorID` for every possible foreground/background combination of each of the 15 colors, and returns a map from (fg, bg) tuples to corresponding `ColorID`.
 - Create a `Buffer` (a 2D `Vector` of `Color`) by providing dimensions and a default color to `mkBuffer`.
