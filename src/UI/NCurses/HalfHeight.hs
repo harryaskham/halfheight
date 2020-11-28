@@ -72,7 +72,7 @@ registerHexColors hexes = sequence_ . getZipList $ ZipList mkColors <*> ZipList 
         | (r, g, b) <- catMaybes $ parseColor <$> hexes
       ]
 
--- Takes all custom colors and defines + persists them as an overlap map.
+-- | Takes all custom colors and defines + persists them as an overlap map.
 -- Registers the given list of 15 hex colors with Curses.
 -- Stores each combination of colors (foreground and background) as a unique ColorID
 -- Returns a map from (fg, bg) pairs to the corresponding registered ColorID for the pair.
