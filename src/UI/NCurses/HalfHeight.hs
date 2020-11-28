@@ -89,45 +89,31 @@ initHexColors hexes = do
     newColors = getZipList $ colorCreators <*> ZipList (fromIntegral <$> colorIDs)
 
 -- Representation of a 2D grid of half-height coloured cells.
-type Buffer = Vector (Vector Color)
+type Buffer = M.Map (Int, Int) ColorPair
 
 -- Make an empty buffer.
 mkBuffer :: Int -> Int -> Color -> Buffer
-mkBuffer width height bgCol = V.replicate height (V.replicate width bgCol)
+mkBuffer width height bgCol = M.fromList [((x, y), (ColorPair bgCol bgCol)) | y <- [0 .. (height `div` 2) -1], x <- [0 .. width -1]]
 
 -- | Set a single block in the graphics buffer to the given color.
--- If the update is out of bounds, no action is performed.
 setXY :: Int -> Int -> Color -> Buffer -> Buffer
-setXY x y c b
-  | x < 0 || x >= width || y < 0 || y >= height = b
-  | otherwise = b V.// [(y, row)]
+setXY x y c b = M.insert (x, y `div` 2) newPair b
   where
-    height = V.length b
-    width = V.length $ b V.! 0
-    row = (b V.! y) V.// [(x, c)]
-
--- Takes chunked vector rows and combines them into the paired
--- block-display halfrows.
-combineRows :: Vector (Vector Color) -> Vector ColorPair
-combineRows chunk = combineCells <$> V.zip r1 r2
-  where
-    [r1, r2] = V.toList chunk
-    combineCells (fg, bg) = ColorPair fg bg
+    -- TODO: fix partiality
+    (Just (ColorPair c1 c2)) = M.lookup (x, y `div` 2) b
+    newPair = case y `mod` 2 of
+      0 -> ColorPair c c2
+      1 -> ColorPair c1 c
 
 -- | Draws the graphics buffer to the screen at the given top-left position.
 -- Must first have obtained a color map by registering colors with initHexColors.
 drawBuffer :: ColorMap -> Int -> Int -> Buffer -> Update ()
-drawBuffer colorMap topLeftX topLeftY gfxBuffer =
-  do
-    let height = V.length gfxBuffer `div` 2
-        width = V.length (gfxBuffer V.! 0)
-        pairedBuffer = V.fromList $ combineRows <$> VS.chunksOf 2 gfxBuffer
-        mkSetter x y = do
-          let (ColorPair fg bg) = pairedBuffer V.! y V.! x
-          case colorId colorMap fg bg of
-            Just cId -> do
-              moveCursor (fromIntegral $ y + topLeftY) (fromIntegral $ x + topLeftX)
-              setColor cId
-              drawGlyph $ Glyph '▀' []
-            Nothing -> return ()
-    sequence_ [mkSetter x y | x <- [0 .. width - 1], y <- [0 .. height -1]]
+drawBuffer colorMap topLeftX topLeftY buffer = do
+  let drawOne ((x, y), (ColorPair fg bg)) = do
+        case colorId colorMap fg bg of
+          Just cId -> do
+            moveCursor (fromIntegral $ y + topLeftY) (fromIntegral $ x + topLeftX)
+            setColor cId
+            drawGlyph $ Glyph '▀' []
+          Nothing -> return ()
+  sequence_ $ drawOne <$> (M.toList buffer)

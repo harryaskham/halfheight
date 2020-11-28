@@ -28,6 +28,9 @@ dependencies:
 - vector-split
 - split
 - int-cast
+- mtl
+- random
+- text
 
 library:
   source-dirs: src

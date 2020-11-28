@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: baa0707c6a410c8b48d3950c05e67e6199c5fd2768b19199c7924ed1e9756c90
+-- hash: de2a54e284b776bf03f97c296d1c9c0558f713793617632927e486f8cc58b74c
 
 name:           halfheight
 version:        0.1.0.0
@@ -37,8 +37,11 @@ library
     , containers
     , int-cast
     , linear
+    , mtl
     , ncurses
+    , random
     , split
+    , text
     , vector
     , vector-split
   default-language: Haskell2010
@@ -56,8 +59,11 @@ executable halfheight-exe
     , halfheight
     , int-cast
     , linear
+    , mtl
     , ncurses
+    , random
     , split
+    , text
     , vector
     , vector-split
   default-language: Haskell2010
@@ -76,8 +82,11 @@ test-suite halfheight-test
     , halfheight
     , int-cast
     , linear
+    , mtl
     , ncurses
+    , random
     , split
+    , text
     , vector
     , vector-split
   default-language: Haskell2010

@@ -3,8 +3,18 @@
 module Main where
 
 import Control.Monad (forever)
+import Control.Monad.IO.Class (MonadIO (liftIO))
+import Control.Monad.State.Strict
+  ( MonadState (get, put),
+    execStateT,
+    forever,
+    lift,
+    runStateT,
+  )
 import Data.Complex (Complex (..), magnitude)
 import Data.List (foldl')
+import qualified Data.Text as T
+import System.Random (Random (randomR), newStdGen)
 import UI.NCurses
   ( Color (..),
     CursorMode (..),
@@ -67,12 +77,12 @@ drawMandelbrot buffer =
     buffer
     [(x, y) | x <- [0 .. 149], y <- [0 .. 99]]
 
-main :: IO ()
-main = do
+mandelbrotMain :: IO ()
+mandelbrotMain = do
   -- Register the 15 greyscale hex colors as Color 1 through Color 15.
   -- Every combination of these colors (fg and bg) is registered with Curses
   -- with a unique ID, which we return in the colorMap.
-  colorMap <- runCurses $ initHexColors greyScale
+  colorMap <- runCurses $ initHexColors nord
 
   -- Creates a new buffer and draws the Mandelbrot set in each cell using the
   -- greyscale colors 1 through 15
@@ -97,3 +107,56 @@ main = do
       w <- defaultWindow
       updateWindow w drawOp
       render
+
+nord :: [String]
+nord =
+  [ "3b4252",
+    "bf616a",
+    "a3be8c",
+    --"ebcb8b",
+    "81a1c1",
+    "b48ead",
+    "88c0d0",
+    "e5e9f0",
+    "4c566a",
+    "bf616a",
+    "a3be8c",
+    "ebcb8b",
+    "81a1c1",
+    "b48ead",
+    "8fbcbb",
+    "eceff4"
+  ]
+
+performanceMain :: IO ()
+performanceMain = do
+  colorMap <- runCurses $ initHexColors nord
+  let buffer = mkBuffer 100 100 (Color 1)
+  runCurses $ do
+    _ <- (flip runStateT) (buffer, 0) $ do
+      lift $ setEcho False
+      lift $ setCursorMode CursorInvisible
+      forever $ do
+        (b, frames) <- get
+        g <- liftIO newStdGen
+        --let (x, g') = randomR (0, 99) g
+        --let (y, g'') = randomR (0, 99) g'
+        let (c, _) = randomR (1, 15) g
+            -- newB = setXY x y (Color c) b
+            newB = foldl' (\b (x, y) -> setXY x y (Color c) b) b [(x, y) | x <- [0 .. 99], y <- [0 .. 99]]
+            drawOp = do
+              drawBuffer colorMap 0 0 newB
+              let (Just c) = colorId colorMap (Color 15) (Color 1)
+              setColor c
+              moveCursor 0 0
+              drawText $ T.pack $ show frames
+        w <- lift defaultWindow
+        lift $ updateWindow w drawOp
+        lift render
+        put (newB, frames + 1)
+    return ()
+
+main :: IO ()
+main = do
+  --mandelbrotMain
+  performanceMain
