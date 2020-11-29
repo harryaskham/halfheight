@@ -131,28 +131,24 @@ nord =
 performanceMain :: IO ()
 performanceMain = do
   colorMap <- runCurses $ initHexColors greyScale
+  -- Precompute the buffers
   let buffer = mkBuffer 100 100 (Color 1)
+      col x y t =
+        let x' = fromIntegral (x - 50)
+            y' = fromIntegral (y - 50)
+            t' = fromIntegral t
+         in abs $ round $ (14 * ((sin $ 0.1 * x') * (cos $ 0.1 * y')) / (sin $ 0.1 * t')) + 1
+      nextBuf b t = foldl' (\b (x, y) -> setXY x y (Color $ col x y t) b) b [(x, y) | x <- [0 .. 99], y <- [0 .. 99]]
+      bufs = cycle $ scanl nextBuf buffer [0 .. 63]
   runCurses $ do
-    _ <- (flip runStateT) (buffer, 0) $ do
+    _ <- (flip runStateT) (bufs, 0) $ do
       lift $ setEcho False
       lift $ setCursorMode CursorInvisible
       forever $ do
-        (b, t) <- get
-        let col x y =
-              let x' = fromIntegral (x - 50)
-                  y' = fromIntegral (y - 50)
-                  t' = fromIntegral t
-               in abs $ round $ (14 * ((sin $ 0.1 * x') * (cos $ 0.1 * y')) / (sin $ 0.1 * t')) + 1
-            {-
-            let col x y =
-                  let x' = fromIntegral (x - 50)
-                      y' = fromIntegral (y - 50)
-                      t' = fromIntegral t
-                   in 1 + (x' * y' * t') `mod` 14
-            -}
-            newB = foldl' (\b (x, y) -> setXY x y (Color $ col x y) b) b [(x, y) | x <- [0 .. 99], y <- [0 .. 99]]
+        (bufs, t) <- get
+        let b = head bufs
             drawOp = do
-              drawBuffer colorMap 0 0 newB
+              drawBuffer colorMap 0 0 b
               let (Just c) = colorId colorMap (Color 15) (Color 1)
               setColor c
               moveCursor 0 0
@@ -160,7 +156,7 @@ performanceMain = do
         w <- lift defaultWindow
         lift $ updateWindow w drawOp
         lift render
-        put (newB, t + 1)
+        put (tail bufs, t + 1)
     return ()
 
 main :: IO ()

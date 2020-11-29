@@ -87,35 +87,39 @@ initHexColors hexes = do
     colorCreators = ZipList $ uncurry newColorID <$> colorCombos
     newColors = getZipList $ colorCreators <*> ZipList (fromIntegral <$> colorIDs)
 
--- Representation of a 2D grid of half-height coloured cells.
--- TODO: Try an intmap
-type Buffer = M.Map (Int, Int) ColorPair
+-- | Representation of a 2D grid of half-height coloured cells.
+-- Stored in a map with the original coordinates for convenience + speed.
+-- Keys are 10000x + y since buffers rarely get this large.
+type Buffer = IM.IntMap ((Int, Int), ColorPair)
+
+bufferKey :: (Int, Int) -> Int
+bufferKey (x, y) = 10000 * x + y
 
 -- | Make an empty buffer with the given color set as the background.
 mkBuffer :: Int -> Int -> Color -> Buffer
 mkBuffer width height (Color bgCol) =
-  M.fromList
-    [((x, y), (bgCol, bgCol)) | y <- [0 .. (height `div` 2) -1], x <- [0 .. width -1]]
+  IM.fromList
+    [(bufferKey (x, y), ((x, y), (bgCol, bgCol))) | y <- [0 .. (height `div` 2) -1], x <- [0 .. width -1]]
 
 -- | Set a single block in the graphics buffer to the given color.
 setXY :: Int -> Int -> Color -> Buffer -> Buffer
 setXY x y (Color c) =
-  M.adjust
-    ( \(c1, c2) -> case y `rem` 2 of
-        0 -> (c, c2)
-        1 -> (c1, c)
+  IM.adjust
+    ( \(p, (c1, c2)) -> case y `rem` 2 of
+        0 -> (p, (c, c2))
+        1 -> (p, (c1, c))
     )
-    (x, y `div` 2)
+    (bufferKey (x, y `div` 2))
 
 -- | Draws the graphics buffer to the screen at the given top-left position.
 -- Must first have obtained a color map by registering colors with initHexColors.
 drawBuffer :: ColorMap -> Int -> Int -> Buffer -> Update ()
 drawBuffer colorMap topLeftX topLeftY buffer = do
-  let drawOne ((x, y), (fg, bg)) =
+  let drawOne (_, ((x, y), (fg, bg))) =
         case colorId colorMap (Color fg) (Color bg) of
           Just cId -> do
             moveCursor (fromIntegral $ y + topLeftY) (fromIntegral $ x + topLeftX)
             setColor cId
             drawGlyph $ Glyph '▀' []
           Nothing -> return ()
-  sequence_ $ drawOne <$> M.toList buffer
+  sequence_ $ drawOne <$> IM.toList buffer
