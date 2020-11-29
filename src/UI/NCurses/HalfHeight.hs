@@ -11,6 +11,7 @@ where
 
 import Control.Applicative (ZipList (ZipList, getZipList))
 import Data.Int (Int16)
+import qualified Data.IntMap.Strict as IM
 import Data.List.Split as LS (chunksOf)
 import qualified Data.Map.Strict as M
 import Data.Maybe (catMaybes)
@@ -38,11 +39,15 @@ toTuple3 _ = Nothing
 type ColorPair = (Int16, Int16)
 
 -- | A map to store the registered color pairings.
-type ColorMap = M.Map ColorPair ColorID
+-- Keyed by fg*100 + bg for speed.
+type ColorMap = IM.IntMap ColorID
+
+colorKey :: ColorPair -> Int
+colorKey (fg, bg) = fromIntegral $ fg * 100 + bg
 
 -- | Get the registered curses ID for a given foreground / background colour combination.
 colorId :: ColorMap -> Color -> Color -> Maybe ColorID
-colorId colors (Color fg) (Color bg) = M.lookup (fg, bg) colors
+colorId colors (Color fg) (Color bg) = IM.lookup (colorKey (fg, bg)) colors
 
 -- Takes a hex code and converts to a tuple of RGB 1000 values.
 -- These are required by the curses color register.
@@ -72,13 +77,13 @@ registerHexColors hexes = sequence_ . getZipList $ ZipList mkColors <*> ZipList 
 initHexColors :: [String] -> Curses ColorMap
 initHexColors hexes = do
   registerHexColors hexes
-  sequenceA $ M.fromList (zip colorKeys newColors)
+  sequenceA $ IM.fromList (zip colorKeys newColors)
   where
     colorIxs = [1 .. 15]
     colors = Color <$> colorIxs
     colorIDs = [1 .. length colors ^ 2]
     colorCombos = (,) <$> colors <*> colors
-    colorKeys = (,) <$> colorIxs <*> colorIxs
+    colorKeys = colorKey <$> ((,) <$> colorIxs <*> colorIxs)
     colorCreators = ZipList $ uncurry newColorID <$> colorCombos
     newColors = getZipList $ colorCreators <*> ZipList (fromIntegral <$> colorIDs)
 
